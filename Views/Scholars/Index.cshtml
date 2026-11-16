@@ -1,0 +1,68 @@
+@model List<Scholar>
+@{
+    ViewData["Title"] = "Scholars";
+}
+
+<div class="bar">
+    <h1>Scholars (@Model.Count)</h1>
+    <a class="btn" asp-action="Create">Add scholar</a>
+</div>
+
+@if (TempData["Message"] is string message)
+{
+    <p class="notice" role="status">@message</p>
+}
+
+@if (Model.Count == 0)
+{
+    <p>No scholars yet. Add one to get started.</p>
+}
+else
+{
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Program</th>
+                    <th>Year</th>
+                    <th>Status</th>
+                    <th>Allowance</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var s in Model)
+                {
+                    <tr>
+                        <td>@s.Id</td>
+                        <td>@s.FullName</td>
+                        <td>@s.Program</td>
+                        <td>@s.YearLevel</td>
+                        <td>
+                            <form asp-action="ChangeStatus" asp-route-id="@s.Id" method="post">
+                                <select name="status" aria-label="Status for @s.FullName" onchange="this.form.submit()">
+                                    @foreach (var st in Enum.GetValues<ScholarStatus>())
+                                    {
+                                        <option value="@st" selected="@(st == s.Status)">@st</option>
+                                    }
+                                </select>
+                            </form>
+                        </td>
+                        <td>
+                            <span class="tag @(s.Allowance == AllowanceStatus.Released ? "tag-released" : "")">@s.Allowance</span>
+                            <form asp-action="ToggleAllowance" asp-route-id="@s.Id" method="post" class="inline">
+                                <button type="submit">@(s.Allowance == AllowanceStatus.Released ? "Set to Pending" : "Release")</button>
+                            </form>
+                        </td>
+                        <td>
+                            <a asp-action="Edit" asp-route-id="@s.Id">Edit</a>
+                            <a asp-action="Delete" asp-route-id="@s.Id">Delete</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
