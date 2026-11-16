@@ -1,0 +1,21 @@
+@model Scholar
+
+<div asp-validation-summary="ModelOnly" class="error"></div>
+
+<label asp-for="FullName"></label>
+<input asp-for="FullName" autocomplete="off" />
+<span asp-validation-for="FullName" class="error"></span>
+
+<label asp-for="Program"></label>
+<select asp-for="Program" asp-items="new SelectList(ScholarOptions.Programs)"></select>
+<span asp-validation-for="Program" class="error"></span>
+
+<label asp-for="YearLevel"></label>
+<input asp-for="YearLevel" type="number" min="1" max="5" />
+<span asp-validation-for="YearLevel" class="error"></span>
+
+<label asp-for="Status"></label>
+<select asp-for="Status" asp-items="Html.GetEnumSelectList<ScholarStatus>()"></select>
+
+<label asp-for="Allowance"></label>
+<select asp-for="Allowance" asp-items="Html.GetEnumSelectList<AllowanceStatus>()"></select>
