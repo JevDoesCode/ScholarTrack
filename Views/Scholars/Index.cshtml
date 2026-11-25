@@ -1,10 +1,11 @@
-@model List<Scholar>
+@model ScholarListViewModel
 @{
     ViewData["Title"] = "Scholars";
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
 }
 
 <div class="bar">
-    <h1>Scholars (@Model.Count)</h1>
+    <h1>Scholars</h1>
     <a class="btn" asp-action="Create">Add scholar</a>
 </div>
 
@@ -13,12 +14,57 @@
     <p class="notice" role="status">@message</p>
 }
 
-@if (Model.Count == 0)
+<form method="get" asp-action="Index" class="search" role="search">
+    <div class="search-row">
+        <input type="search" name="search" value="@Model.Search" placeholder="Search by name or ID" aria-label="Search by name or ID" />
+
+        <select name="program" aria-label="Program">
+            <option value="">All programs</option>
+            @foreach (var p in ScholarOptions.Programs)
+            {
+                <option value="@p" selected="@(p == Model.Program)">@p</option>
+            }
+        </select>
+
+        <select name="status" aria-label="Status">
+            <option value="">All statuses</option>
+            @foreach (var st in Enum.GetValues<ScholarStatus>())
+            {
+                <option value="@st" selected="@(st == Model.Status)">@st</option>
+            }
+        </select>
+
+        <select name="allowance" aria-label="Allowance">
+            <option value="">All allowances</option>
+            @foreach (var al in Enum.GetValues<AllowanceStatus>())
+            {
+                <option value="@al" selected="@(al == Model.Allowance)">@al</option>
+            }
+        </select>
+
+        <select name="sort" aria-label="Sort by">
+            @foreach (var option in ScholarListViewModel.SortOptions)
+            {
+                <option value="@option.Key" selected="@(option.Key == Model.Sort)">@option.Value</option>
+            }
+        </select>
+
+        <button type="submit">Search</button>
+        @if (Model.HasFilters || Model.Sort != "name")
+        {
+            <a class="btn" asp-action="Index">Reset</a>
+        }
+    </div>
+</form>
+
+@if (Model.TotalCount == 0)
 {
-    <p>No scholars yet. Add one to get started.</p>
+    <p>@(Model.OverallCount == 0 ? "No scholars yet. Add one to get started." : "No scholars match your search. Try different keywords or reset the filters.")</p>
 }
 else
 {
+    <p class="summary">Showing @(Model.FirstItem) to @(Model.LastItem) of @(Model.TotalCount) @(Model.HasFilters ? "matching " : "")scholars</p>
+
     <div class="table-wrap">
         <table>
             <thead>
@@ -33,7 +79,7 @@ else
                 </tr>
             </thead>
             <tbody>
-                @foreach (var s in Model)
+                @foreach (var s in Model.Items)
                 {
                     <tr>
                         <td>@s.Id</td>
@@ -42,6 +88,7 @@ else
                         <td>@s.YearLevel</td>
                         <td>
                             <form asp-action="ChangeStatus" asp-route-id="@s.Id" method="post">
+                                <input type="hidden" name="returnUrl" value="@returnUrl" />
                                 <select name="status" aria-label="Status for @s.FullName" onchange="this.form.submit()">
                                     @foreach (var st in Enum.GetValues<ScholarStatus>())
                                     {
@@ -53,6 +100,7 @@ else
                         <td>
                             <span class="tag @(s.Allowance == AllowanceStatus.Released ? "tag-released" : "")">@s.Allowance</span>
                             <form asp-action="ToggleAllowance" asp-route-id="@s.Id" method="post" class="inline">
+                                <input type="hidden" name="returnUrl" value="@returnUrl" />
                                 <button type="submit">@(s.Allowance == AllowanceStatus.Released ? "Set to Pending" : "Release")</button>
                             </form>
                         </td>
@@ -65,4 +113,19 @@ else
             </tbody>
         </table>
     </div>
+
+    @if (Model.PageCount > 1)
+    {
+        <nav class="pagination" aria-label="Pagination">
+            @if (Model.Page > 1)
+            {
+                <a class="btn" asp-action="Index" asp-all-route-data="Model.RouteValues(Model.Page - 1)">Previous</a>
+            }
+            <span>Page @(Model.Page) of @(Model.PageCount)</span>
+            @if (Model.Page < Model.PageCount)
+            {
+                <a class="btn" asp-action="Index" asp-all-route-data="Model.RouteValues(Model.Page + 1)">Next</a>
+            }
+        </nav>
+    }
 }
